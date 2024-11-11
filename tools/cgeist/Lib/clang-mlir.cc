@@ -4936,6 +4936,9 @@ MLIRASTConsumer::GetOrCreateGlobal(const ValueDecl *FD, std::string prefix,
   } else if (VD->hasAttr<CUDADeviceAttr>()) {
     globalOp->setAttr("polygeist.cuda_device", builder.getUnitAttr());
   }
+  if (VD->hasAttr<NonVolatileVariableAttr>()) {
+    globalOp->setAttr("intermittent.nonvolatile", builder.getUnitAttr());
+  }
 
   globals[name] = std::make_pair(globalOp, isArray);
 
@@ -5188,6 +5191,11 @@ MLIRASTConsumer::GetOrCreateMLIRFunction(const FunctionDecl *FD,
       !FD->hasAttr<CUDAHostAttr>()) {
     function->setAttr("polygeist.device_only_func",
                       StringAttr::get(builder.getContext(), "1"));
+  }
+  if (FD->hasAttr<IntermittentTaskAttr>()) {
+    function->setAttr("intermittent.task", 
+    builder.getI32IntegerAttr(
+        FD->getAttr<IntermittentTaskAttr>()->getId()));
   }
 
   if (LV == llvm::GlobalValue::InternalLinkage ||
